@@ -1,0 +1,82 @@
+function onFormSubmit(e) {
+  // Access the sheet where form responses are stored  
+  // Extract the zip code and email from the form submission
+  var zipCode = e.values[2]; // Assuming the zip code is in the fourth column
+  var email = e.values[4]; // Assuming the email is in the sixth column
+  // Access the ZipCode-Zone Mapping sheet
+  var zoneSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Zipcode Database');
+  
+  // Get all data from the zone sheet
+  var data = zoneSheet.getDataRange().getValues();
+  
+  // Initialize a variable to store the matched gardening zone
+  var matchedZone = '';
+
+  // Loop through the data to find the corresponding zone
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] == zipCode) {  // data[i][0] is the zip code from the sheet
+      matchedZone = data[i][1]; // data[i][1] is the gardening zone from the sheet
+      break;  // Exit the loop once the correct zone is found
+    }
+  }
+
+  Logger.log(matchedZone);
+  // If a gardening zone is found, map it to the corresponding ConvertKit tag ID
+  if (matchedZone) {
+    var gardeningZoneTags = {
+      "Zone 1a": 5280347,
+      "Zone 1b": 5280348,
+      "Zone 2a": 5280349,
+      "Zone 2b": 5280350,
+      "Zone 3a": 5280351,
+      "Zone 3b": 5280353,
+      "Zone 4a": 5280354,
+      "Zone 4b": 5280359,
+      "Zone 5a": 5280360,
+      "Zone 5b": 5280361,
+      "Zone 6a": 5280362,
+      "Zone 6b": 5280364,
+      "Zone 7a": 5280365,
+      "Zone 7b": 5280366,
+      "Zone 8a": 5280367,
+      "Zone 8b": 5280369,
+      "Zone 9a": 5280371,
+      "Zone 9b": 5280372,
+      "Zone 10a": 5280373,
+      "Zone 10b": 5280374,
+      "Zone 11a": 5280375,
+      "Zone 11b": 5280377,
+      "Zone 12a": 5280379,
+      "Zone 12b": 5280381
+    };
+
+    // Get the tag ID corresponding to the matched zone
+    var tagId = gardeningZoneTags["Zone "+ matchedZone];
+
+    Logger.log(tagId);
+    Logger.log(email);
+    // Prepare the payload to send to ConvertKit
+    var apiKey = 'MHr3CXm0Z0ZZ-QgToAn3xQ';
+    var formId = '6965995'; // If you're adding subscribers to a form
+    
+    var payload = {
+      email: email,
+      api_key: apiKey,
+      tags: [tagId], // Use the actual tag ID corresponding to the zone
+      "fields[form]": formId,
+      double_opt_in: false
+    };
+    
+    var options = {
+      'method': 'post',
+      'contentType': 'application/json',
+      'payload': JSON.stringify(payload)
+    };
+    
+    // Send the request to ConvertKit
+    var response = UrlFetchApp.fetch('https://api.convertkit.com/v3/forms/' + formId + '/subscribe', options);
+    Logger.log("Response: " + response.getContentText());
+  } else {
+    Logger.log("No matching gardening zone found for zip code: " + zipCode);
+  }
+}
